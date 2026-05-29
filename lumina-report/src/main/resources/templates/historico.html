@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Histórico de Exportações - Lumina Report</title>
+    <meta charset="UTF-8">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        .navbar-custom { background-color: #212529; }
+        .text-lumina { color: #198754; } /* Verde para remeter ao Excel */
+        .table-header-dark { background-color: #212529 !important; color: white !important; }
+    </style>
+</head>
+<body class="bg-light d-flex flex-column min-vh-100">
+
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom shadow-sm py-3">
+        <div class="container d-flex justify-content-between align-items-center">
+            <span class="navbar-brand fw-bold text-lumina m-0 fs-4">
+                <i class="bi bi-file-earmark-spreadsheet-fill"></i> Auditoria de Relatórios
+            </span>
+            <span class="badge border border-info text-info bg-dark px-3 py-2 rounded-pill shadow-sm">
+                <i class="bi bi-hdd-network"></i> Microserviço 8081
+            </span>
+        </div>
+    </nav>
+
+    <div class="container py-5 flex-grow-1">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold text-dark"><i class="bi bi-clock-history me-2"></i> Histórico de Conversões (Excel)</h3>
+        </div>
+
+        <div class="card shadow-sm border-0 rounded">
+            <div class="card-header bg-white border-bottom border-light pt-3 pb-2">
+                <h6 class="fw-bold text-dark m-0">Últimas exportações geradas pelo sistema</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0 align-middle">
+                        <thead>
+                            <tr>
+                                <th class="table-header-dark ps-4">ID</th>
+                                <th class="table-header-dark">Tipo de Relatório</th>
+                                <th class="table-header-dark">Usuário Gerador</th>
+                                <th class="table-header-dark text-center pe-4">Data e Hora</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:if="${#lists.isEmpty(historicos)}">
+                                <td colspan="4" class="text-center py-4 text-muted">
+                                    <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                    Nenhuma planilha foi gerada ainda.
+                                </td>
+                            </tr>
+                            
+                            <tr th:each="hist : ${historicos}">
+                                <td class="fw-bold text-secondary ps-4" th:text="${hist.id}"></td>
+                                <td>
+                                    <span class="badge bg-success" th:text="${hist.tipoRelatorio}"></span>
+                                </td>
+                                <td th:text="${hist.usuarioResponsavel}"></td>
+                                <td class="text-center fw-semibold pe-4" th:text="${hist.dataHoraFormatada}"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center py-4 bg-dark text-white-50 mt-auto small">
+        &copy; 2026 Lumina Report - Gerador de Planilhas
+    </footer>
+</body>
+</html>
