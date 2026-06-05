@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>PDV - Lumina Stock</title>
+    <meta charset="UTF-8">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <style>
+        .fab-cart {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background-color: #198754; 
+            color: white;
+            font-size: 30px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: transform 0.2s;
+        }
+        .fab-cart:hover {
+            transform: scale(1.1);
+            background-color: #157347;
+        }
+        .badge-count {
+            position: absolute;
+            top: 0;
+            right: 0;
+            font-size: 14px;
+            padding: 5px 10px;
+            border-radius: 50%;
+            background-color: red;
+            border: 2px solid white;
+        }
+        .nav-link:hover {
+            color: #ffc107 !important; 
+            transition: 0.3s;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm mb-4">
+    <div class="container">
+        <span class="navbar-brand fw-bold text-warning">
+            <i class="bi bi-speedometer2"></i> Gestão de Estoque
+        </span>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/menu">
+                        <i class="bi bi-grid-fill"></i> Menu Principal
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/analise">
+                        <i class="bi bi-graph-up-arrow"></i> Relatórios
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/novo">
+                        <i class="bi bi-plus-circle"></i> Novo Produto
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-danger" href="/logout">
+                        <i class="bi bi-box-arrow-right"></i> Sair
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container pb-5">
+    
+    <div th:if="${mensagem}" class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle-fill"></i> <span th:text="${mensagem}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${erro}" class="alert alert-danger alert-dismissible fade show">
+        <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${erro}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0"><i class="bi bi-cart4"></i> Ponto de Venda (PDV)</h4>
+            <span class="badge bg-light text-dark">Lumina v1.0</span>
+        </div>
+        
+        <div class="card-body">
+            <table class="table table-hover table-bordered align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Produto</th>
+                        <th>Preço Venda</th>
+                        <th>Estoque</th>
+                        <th class="text-center" style="width: 150px;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="prod : ${produtos}">
+                        <td>
+                            <span th:text="${prod.nome}" class="fw-bold">Lustre</span>
+                            <br>
+                            <small class="text-muted" th:text="${prod.categoria.nome}">Categoria</small>
+                        </td>
+                        <td class="text-success fw-bold" th:text="'R$ ' + ${#numbers.formatDecimal(prod.precoVenda, 1, 2)}">200.00</td>
+                        
+                        <td th:classappend="${prod.quantidadeEstoque <= 0} ? 'text-danger fw-bold' : ''" 
+                            th:text="${prod.quantidadeEstoque}">10</td>
+
+                        <td class="text-center">
+                            <button type="button" 
+                                    th:class="${prod.quantidadeEstoque <= 0} ? 'btn btn-secondary btn-sm' : 'btn btn-outline-success btn-sm'"
+                                    th:disabled="${prod.quantidadeEstoque <= 0}"
+                                    th:onclick="adicionarAoCarrinho([[${prod.id}]], [[${prod.nome}]], [[${prod.precoVenda}]])"
+                                    title="Adicionar ao Carrinho">
+                                <i th:class="${prod.quantidadeEstoque <= 0} ? 'bi bi-cart-x-fill' : 'bi bi-cart-plus-fill'"></i> 
+                                <span th:text="${prod.quantidadeEstoque <= 0} ? 'Sem Estoque' : 'Adicionar'">Adicionar</span>
+                            </button>
+
+                            <div class="btn-group mt-1">
+                                <button type="button" class="btn btn-light btn-sm dropdown-toggle border" data-bs-toggle="dropdown">
+                                    <i class="bi bi-gear"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" th:href="@{/editar/{id}(id=${prod.id})}">Editar</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" th:href="@{/deletar/{id}(id=${prod.id})}" onclick="return confirm('Excluir?')">Excluir</a></li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<button class="fab-cart" data-bs-toggle="modal" data-bs-target="#modalCarrinho" onclick="renderizarCarrinho()">
+    <i class="bi bi-cart-check"></i>
+    <span class="badge-count" id="contadorCarrinho">0</span>
+</button>
+
+<div class="modal fade" id="modalCarrinho" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="bi bi-cart4"></i> Finalizar Venda</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Qtd</th>
+                            <th>Subtotal</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaCarrinho"></tbody>
+                    <tfoot>
+                        <tr class="table-active fw-bold fs-5">
+                            <td colspan="2" class="text-end">TOTAL A PAGAR:</td>
+                            <td colspan="2" id="totalCarrinho" class="text-success">R$ 0,00</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Continuar Comprando</button>
+                <button type="button" class="btn btn-success fw-bold" id="btnConcluirVenda" onclick="finalizarCompra()">
+                    <i class="bi bi-check-lg"></i> CONCLUIR VENDA
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // --- LÓGICA DO CARRINHO ---
+    let carrinho = []; 
+
+    function adicionarAoCarrinho(id, nome, preco) {
+        let itemExistente = carrinho.find(item => item.id === id);
+        if (itemExistente) {
+            itemExistente.quantidade++;
+        } else {
+            carrinho.push({ id: id, nome: nome, preco: preco, quantidade: 1 });
+        }
+        atualizarContador();
+        const btn = event.target.closest('button'); 
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check"></i> Add!';
+        setTimeout(() => btn.innerHTML = originalHTML, 1000);
+    }
+
+    function atualizarContador() {
+        let totalItens = carrinho.reduce((sum, item) => sum + item.quantidade, 0);
+        document.getElementById('contadorCarrinho').innerText = totalItens;
+    }
+
+    function renderizarCarrinho() {
+        let tbody = document.getElementById('listaCarrinho');
+        let btnConcluir = document.getElementById('btnConcluirVenda');
+        tbody.innerHTML = ''; 
+        let totalGeral = 0;
+
+        if (carrinho.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-4">
+                        <i class="bi bi-cart-x fs-1 d-block mb-2"></i>
+                        Seu carrinho está vazio.<br>Adicione itens do PDV para continuar.
+                    </td>
+                </tr>
+            `;
+            btnConcluir.disabled = true;
+            btnConcluir.classList.remove('btn-success');
+            btnConcluir.classList.add('btn-secondary');
+        } else {
+            btnConcluir.disabled = false;
+            btnConcluir.classList.remove('btn-secondary');
+            btnConcluir.classList.add('btn-success');
+
+            carrinho.forEach((item, index) => {
+                let subtotal = item.preco * item.quantidade;
+                totalGeral += subtotal;
+
+                let tr = `
+                    <tr>
+                        <td>${item.nome}</td>
+                        <td>
+                            <input type="number" min="1" value="${item.quantidade}" 
+                                   class="form-control form-control-sm" style="width: 80px"
+                                   onchange="atualizarQtd(${index}, this.value)">
+                        </td>
+                        <td>R$ ${subtotal.toFixed(2)}</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" onclick="removerItem(${index})" title="Remover item">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += tr;
+            });
+        }
+
+        document.getElementById('totalCarrinho').innerText = 'R$ ' + totalGeral.toFixed(2);
+    }
+
+    function atualizarQtd(index, novaQtd) {
+        if(novaQtd < 1) return;
+        carrinho[index].quantidade = parseInt(novaQtd);
+        renderizarCarrinho(); 
+        atualizarContador();
+    }
+
+    function removerItem(index) {
+        carrinho.splice(index, 1);
+        renderizarCarrinho();
+        atualizarContador();
+    }
+
+    function finalizarCompra() {
+        if(carrinho.length === 0) {
+            alert("O carrinho está vazio!");
+            return;
+        }
+
+        fetch('/finalizar-venda', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(carrinho)
+        })
+        .then(response => response.text())
+        .then(textoResposta => {
+            if(textoResposta === "Sucesso") {
+                alert("Venda realizada com sucesso!");
+                carrinho = []; 
+                window.location.reload(); 
+            } else {
+                alert("Erro: " + textoResposta);
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert("Erro de conexão com o servidor.");
+        });
+    }
+</script>
+
+</body>
+</html>
